@@ -1,0 +1,149 @@
+import time
+
+# Expanded symptom synonym mapping
+symptom_synonyms = {
+    "fever": {"fewer", "high temperature", "hot body"},
+    "cough": {"coughing", "dry cough", "wet cough"},
+    "fatigue": {"tiredness", "weakness", "exhaustion", "low energy"},
+    "joint pain": {"body ache", "muscle pain", "stiffness"},
+    "skin rash": {"red spots", "itchy skin", "hives"},
+    "chills": {"shivering", "cold sweat"},
+    "vomiting": {"throwing up", "nausea"},
+    "headache": {"migraine", "head pain", "pressure in head"},
+    "diarrhea": {"loose motion", "watery stool"},
+    "shortness of breath": {"breathlessness", "difficulty breathing"},
+    "chest pain": {"heart pain", "tight chest"},
+    "yellow skin": {"jaundice", "pale yellow skin"},
+    "burning urination": {"urine pain", "urination discomfort"},
+    "pale skin": {"low blood", "whitish skin"},
+    "palpitations": {"heart racing", "fast heartbeat"},
+    "loss of taste": {"taste loss", "unable to taste"},
+    "loss of smell": {"smell loss", "unable to smell"},
+    "sore throat": {"throat pain", "scratchy throat"},
+    "congestion": {"stuffy nose", "blocked nose"},
+    "dizziness": {"lightheaded", "feeling faint"},
+    "stomach pain": {"abdominal pain", "belly pain"},
+    "ear pain": {"earache", "ear discomfort"},
+    "blurred vision": {"unclear vision", "hazy sight"},
+    "weight loss": {"unintentional weight loss", "losing weight"},
+    "night sweats": {"excess sweating at night", "sweating in sleep"},
+    "back pain": {"lower back pain", "spinal pain"},
+    "nasal congestion": {"blocked nose", "stuffy nose"},
+    "blood in urine": {"hematuria", "red urine"},
+}
+
+# Disease dataset with doctor recommendations
+expanded_symptom_disease_map = {
+    frozenset(["fever", "cough", "fatigue"]): {
+        "diseases": ["COVID-19", "Flu", "Pneumonia"],
+        "deficiency": "Vitamin C & Zinc deficiency weakens immunity.",
+        "suggestion": "Drink warm fluids, take steam, and rest.",
+        "most_matched_disease": "COVID-19",
+        "doctor": "General Physician 🏥"
+    },
+    frozenset(["joint pain", "fever", "skin rash"]): {
+        "diseases": ["Dengue", "Chikungunya"],
+        "deficiency": "Vitamin D & Calcium deficiency worsens joint pain.",
+        "suggestion": "Stay hydrated and take paracetamol.",
+        "most_matched_disease": "Dengue",
+        "doctor": "General Physician 🏥"
+    },
+    frozenset(["fever", "chills", "sweating"]): {
+        "diseases": ["Malaria", "Typhoid"],
+        "deficiency": "Iron & Vitamin B12 deficiency can worsen symptoms.",
+        "suggestion": "Stay hydrated and take antipyretic medicines.",
+        "most_matched_disease": "Malaria",
+        "doctor": "General Physician 🏥"
+    },
+    frozenset(["cough", "shortness of breath", "chest pain"]): {
+        "diseases": ["Asthma", "Bronchitis"],
+        "deficiency": "Omega-3 and Magnesium deficiency affect lung health.",
+        "suggestion": "Avoid smoke, use inhalers if prescribed, and stay in fresh air.",
+        "most_matched_disease": "Asthma",
+        "doctor": "Pulmonologist (Lung Specialist) 🫁"
+    },
+    frozenset(["nausea", "vomiting", "diarrhea"]): {
+        "diseases": ["Stomach Flu", "Food Poisoning"],
+        "deficiency": "Electrolyte imbalance worsens dehydration.",
+        "suggestion": "Drink ORS, avoid dairy, and rest your stomach.",
+        "most_matched_disease": "Food Poisoning",
+        "doctor": "Gastroenterologist (Stomach & Digestion) 🍽"
+    },
+    frozenset(["chest pain", "palpitations", "dizziness"]): {
+        "diseases": ["Heart Disease", "Hypertension"],
+        "deficiency": "Magnesium & Potassium deficiency affect heart function.",
+        "suggestion": "Reduce salt intake, stay calm, and avoid stress.",
+        "most_matched_disease": "Heart Disease",
+        "doctor": "Cardiologist (Heart Specialist) ❤️"
+    },
+    frozenset(["ear pain", "nasal congestion", "headache"]): {
+        "diseases": ["Sinusitis", "Ear Infection"],
+        "deficiency": "Vitamin A & Zinc deficiency weakens sinus health.",
+        "suggestion": "Use steam therapy and stay hydrated.",
+        "most_matched_disease": "Sinusitis",
+        "doctor": "ENT Specialist 🦻"
+    },
+    frozenset(["blood in urine", "burning urination", "back pain"]): {
+        "diseases": ["Kidney Infection", "UTI"],
+        "deficiency": "Low water intake worsens kidney function.",
+        "suggestion": "Drink plenty of water and avoid caffeine.",
+        "most_matched_disease": "Kidney Infection",
+        "doctor": "Nephrologist (Kidney Specialist) 🩸"
+    },
+}
+
+# Function to standardize symptoms with synonyms
+def standardize_symptoms(user_symptoms):
+    standardized = set()
+    for symptom in user_symptoms:
+        symptom = symptom.lower()
+        found = False
+        for key, synonyms in symptom_synonyms.items():
+            if symptom in synonyms or symptom == key:
+                standardized.add(key)
+                found = True
+                break
+        if not found:
+            print(f"Chatbot: '{symptom}' is not recognized, checking remaining symptoms...")
+    return standardized
+
+# Function to find matching diseases
+def predict_disease(user_symptoms):
+    standardized_symptoms = standardize_symptoms(user_symptoms)
+    best_match = None
+    max_match_count = 0
+
+    for disease_symptoms, details in expanded_symptom_disease_map.items():
+        match_count = len(standardized_symptoms.intersection(disease_symptoms))
+        if match_count > max_match_count:
+            best_match = details
+            max_match_count = match_count
+
+    return best_match
+
+# Main chatbot function
+def chatbot():
+    print("Chatbot: Hello! I am your health assistant. Please enter your symptoms separated by commas.")
+    
+    while True:
+        user_input = input("You: ").strip()
+        
+        if user_input.lower() in ["exit", "quit", "bye"]:
+            print("Chatbot: Take care! Consult a doctor if symptoms persist. Goodbye! 👋")
+            break
+        
+        user_symptoms = [symptom.strip() for symptom in user_input.split(",")]
+        disease_info = predict_disease(user_symptoms)
+        
+        if disease_info:
+            print("\nChatbot: Based on your symptoms, possible conditions are:")
+            print("  - 🔹 Possible Diseases:", ", ".join(disease_info["diseases"]))
+            print("  🔍 Deficiency Factor:", disease_info["deficiency"])
+            print("  ✅ Suggestion:", disease_info["suggestion"])
+            print(f"  🎯 Most Matched Disease: {disease_info['most_matched_disease']}")
+            print(f"  🏥 Recommended Doctor: {disease_info['doctor']}")
+        
+        print("\n⚠️ Chatbot: Please consult a doctor for an accurate diagnosis. ⚕️\n")
+
+# Run the chatbot
+chatbot()
