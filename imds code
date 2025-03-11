@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            text-align: left;
+        }
+        .chat-message {
+            background: #e3f2fd;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .user-message {
+            text-align: right;
+            background: #c8e6c9;
+        }
+        .input-box {
+            display: flex;
+            padding: 10px;
+            background: #fff;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box">
+            <div class="chat-message">👋 Hello! Enter your symptoms separated by commas.</div>
+        </div>
+        <div class="input-box">
+            <input type="text" id="user-input" placeholder="Enter symptoms...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Symptom synonyms mapping
+        const symptomSynonyms = {
+            "fever": ["high temperature", "hot body"],
+            "cough": ["coughing", "dry cough", "wet cough"],
+            "fatigue": ["tiredness", "weakness", "exhaustion"],
+            "joint pain": ["body ache", "muscle pain", "stiffness"],
+            "vomiting": ["throwing up", "nausea"],
+            "headache": ["migraine", "head pain"],
+            "diarrhea": ["loose motion", "watery stool"],
+            "shortness of breath": ["breathlessness", "difficulty breathing"],
+            "chest pain": ["heart pain", "tight chest"],
+            "stomach pain": ["abdominal pain", "belly pain"],
+            "dizziness": ["lightheaded", "feeling faint"],
+            "weight loss": ["losing weight", "unintentional weight loss"],
+            "night sweats": ["sweating at night"],
+            "blurred vision": ["hazy sight", "unclear vision"],
+            "increased thirst": ["excessive thirst"],
+            "frequent urination": ["peeing often"],
+            "burning urination": ["urine pain", "urination discomfort"]
+        };
+
+        // Expanded Disease dataset
+        const diseaseDatabase = [
+            {
+                symptoms: ["fever", "cough", "fatigue"],
+                disease: "COVID-19 / Flu",
+                deficiency: "Vitamin C & Zinc deficiency.",
+                suggestion: "Drink warm fluids & rest.",
+                doctor: "General Physician 🏥"
+            },
+            {
+                symptoms: ["joint pain", "fever", "skin rash"],
+                disease: "Dengue / Chikungunya",
+                deficiency: "Vitamin D & Calcium deficiency.",
+                suggestion: "Stay hydrated & take paracetamol.",
+                doctor: "General Physician 🏥"
+            },
+            {
+                symptoms: ["shortness of breath", "chest pain", "fatigue"],
+                disease: "Pneumonia / Asthma",
+                deficiency: "Omega-3 & Magnesium deficiency.",
+                suggestion: "Use inhalers & avoid smoke.",
+                doctor: "Pulmonologist 🫁"
+            },
+            {
+                symptoms: ["stomach pain", "vomiting", "diarrhea"],
+                disease: "Food Poisoning / Stomach Flu",
+                deficiency: "Electrolyte imbalance.",
+                suggestion: "Drink ORS & avoid dairy.",
+                doctor: "Gastroenterologist 🍽"
+            },
+            {
+                symptoms: ["weight loss", "increased thirst", "frequent urination"],
+                disease: "Diabetes",
+                deficiency: "Insulin resistance.",
+                suggestion: "Control sugar intake, exercise.",
+                doctor: "Endocrinologist 🩺"
+            },
+            {
+                symptoms: ["fatigue", "pale skin", "dizziness"],
+                disease: "Anemia",
+                deficiency: "Iron & Folic Acid deficiency.",
+                suggestion: "Increase iron-rich foods.",
+                doctor: "Hematologist 🩸"
+            },
+            {
+                symptoms: ["headache", "blurred vision", "chest pain"],
+                disease: "Hypertension / Migraine",
+                deficiency: "Magnesium & Potassium deficiency.",
+                suggestion: "Reduce salt intake & stay calm.",
+                doctor: "Cardiologist ❤️"
+            },
+            {
+                symptoms: ["burning urination", "back pain", "frequent urination"],
+                disease: "Kidney Infection / UTI",
+                deficiency: "Low water intake.",
+                suggestion: "Drink plenty of water.",
+                doctor: "Nephrologist 🩸"
+            }
+        ];
+
+        // Function to standardize symptoms
+        function standardizeSymptoms(userSymptoms) {
+            return userSymptoms.map(symptom => {
+                symptom = symptom.toLowerCase().trim();
+                for (const [key, synonyms] of Object.entries(symptomSynonyms)) {
+                    if (symptom === key || synonyms.includes(symptom)) {
+                        return key;
+                    }
+                }
+                return symptom;
+            });
+        }
+
+        // Function to send message
+        function sendMessage() {
+            let userInput = document.getElementById("user-input").value.trim();
+            if (userInput === "") {
+                alert("Please enter symptoms!");
+                return;
+            }
+
+            let chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML += `<div class="chat-message user-message">You: ${userInput}</div>`;
+
+            let userSymptoms = userInput.split(",").map(symptom => symptom.trim());
+            let standardizedSymptoms = standardizeSymptoms(userSymptoms);
+
+            let bestMatch = null;
+            let maxMatchCount = 0;
+
+            diseaseDatabase.forEach(entry => {
+                let matchCount = entry.symptoms.filter(sym => standardizedSymptoms.includes(sym)).length;
+                if (matchCount > maxMatchCount) {
+                    maxMatchCount = matchCount;
+                    bestMatch = entry;
+                }
+            });
+
+            let response = bestMatch
+                ? `<b>🔹 Possible Disease:</b> ${bestMatch.disease}<br>
+                   <b>🛠 Deficiency:</b> ${bestMatch.deficiency}<br>
+                   <b>✅ Suggestion:</b> ${bestMatch.suggestion}<br>
+                   <b>🏥 Doctor:</b> ${bestMatch.doctor}`
+                : "⚠️ No exact match found. Please consult a doctor.";
+
+            chatBox.innerHTML += `<div class="chat-message">${response}</div>`;
+            document.getElementById("user-input").value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+
+</body>
+</html>
